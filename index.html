@@ -4,6 +4,10 @@
 <title>Boids SIM</title>
 
 <style>
+.right {
+	float: right;
+	width: 320px;
+}
 .main {  
     width: 100%;  
 }  
@@ -11,8 +15,12 @@
     width: 640px;  
     margin: 0 auto;  
 }  
+div#header p {
+	font-size: small;
+}
 li {	
 	color: #444;
+	font-size: small;
 }
 h1 {
 	color: #444;
@@ -44,19 +52,17 @@ canvas {
 			<li>すべて消えてしまうと<b>ゲームオーバー</b>。ゲームが続いた時間が長ければ長いほど高いスコアになります。</li>
 			<li>えさでうまく誘導して<b>ボイド</b>の群れを生き延びさせましょう！</li>
 		</ul>
-		<p>制作者: <a href="http://tsujimotter.hatenablog.com/">tsujimotter</a></p>
+		<p>制作者: <a href="http://tsujimotter.hatenablog.com/entry/2013/11/28/054335">tsujimotter</a></p>
 	</div>
 	<div id="mycanvas">
 		<canvas id="canvas" width="640" height="480"></canvas>
 	</div>
-	
-
-	<div id="display">
-		<p><span id="boids"></span> BOIDS ARE REMAINING. YOUR SCORE IS <span id="score"></span>.</p>
-	</div>
 	<div id="mytwitter" style="display: none">
 		<li>twitter で投稿 (コピペして使ってね)</li>
 		<textarea cols="88" rows="4" readonly="readonly" onclick="this.select()" ></textarea>
+	</div>
+	<div id="display">
+		<p><span id="boids"></span> BOIDS ARE REMAINING. YOUR SCORE IS <span id="score"></span>.</p>
 	</div>
 </div>
 <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>

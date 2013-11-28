@@ -1,15 +1,4 @@
 $(function() {
-	//画像オブジェクトに任意の画像を読み込み
-	var boid_img = new Image();
-	//画像のパス指定
-	boid_img.src = "images/boid.png";
-
-
-	//画像オブジェクトに任意の画像を読み込み
-	var enemy_img = new Image();
-	//画像のパス指定
-	enemy_img.src = "images/enemy.png";
-
 
 	// コンテキストを取得する関数
 	function getCtx() {
@@ -20,27 +9,101 @@ $(function() {
     // グローバル変数の初期化
 	var width  = canvas.width;
 	var height = canvas.height;
-
 	var canvasRect = canvas.getBoundingClientRect()
 
 	// 敵キャラ
 	var enemies = new Array(2);
-	enemies[0] = {
-		x: 100,
-		y: 100,
-		radious: 60
-	};
-	enemies[1] = {
-		x: 500,
-		y: 400,
-		radious: 60
-	};
+
+	var Enemy = (function(){
+		//画像オブジェクト
+		var img = new Image();
+		//画像のパス指定
+		img.src = "images/enemy.png";
+
+		function Enemy(id, x, y, radious) {
+			this.id = id;
+			this.x  = x;
+			this.y  = y;
+			this.radious = radious; // 当たり判定用半径
+		}
+
+		Enemy.prototype.update = function(){
+			var dx = Math.random()*40 - 20;
+			var dy = Math.random()*40 - 20;
+
+			if( this.x+dx > 0 && this.x+dx < width 
+				&& this.y+dy > 0 && this.y+dy < height ){
+				this.x += dx;
+				this.y += dy;
+				
+			}
+		}
+
+		Enemy.prototype.draw = function(ctx){
+	    	//canvasの状態を一旦保存
+	    	ctx.save();
+
+    		var image_width  = img.naturalWidth;
+    		var image_height = img.naturalHeight;
+    	
+	    	//ctx.scale(ratio, ratio);
+		    //画像の縦横半分の位置へtranslate
+	    	ctx.translate(this.x-image_width/2 + image_width/2, this.y- image_height/2 +image_height/2);
+			
+			//translateした分戻して原点を0，0に
+	    	ctx.translate(-image_width/2, -image_height/2);
+
+	    	//読み込んだimgをcanvas(c1)に貼付け
+	    	ctx.drawImage(img, 0, 0);
+    		
+    		//canvasの状態を元に戻す
+    		ctx.restore();
+		}
+
+		return Enemy;
+
+	})();
+
+	// 敵キャラの初期化
+	enemies[0] = new Enemy(0, 100, 100, 60);
+	enemies[1] = new Enemy(1, 500, 400, 60);
 
 
-	var target = {
-		x: width/2,
-		y: height*4/5
-	};
+	// ターゲット
+	var Target = (function(){
+		/*
+		//画像オブジェクト
+		var img = new Image();
+		//画像のパス指定
+		img.src = "images/target.png";
+		*/
+		function Target(x, y) {
+			this.x = x;
+			this.y = y;
+		}
+
+		Target.prototype.draw = function(ctx){
+	    	//canvasの状態を一旦保存
+	    	ctx.save();
+
+			ctx.fillStyle = 'rgba(0, 80, 192, 0.7)';
+			ctx.beginPath();
+			ctx.arc(this.x, this.y, 20, 0, Math.PI*2, false);
+			ctx.fill();	
+    		
+    		//canvasの状態を元に戻す
+    		ctx.restore();
+		}
+
+		return Target;
+
+	})();
+
+	// ターゲットの初期化
+	var target = new Target(
+		width/2,   // x
+		height*4/5 // y
+	);
 
 	// ゲーム状態
 	const GAME_CONTEXT_FLAG_GAMERUNNING = 0;
@@ -63,59 +126,52 @@ $(function() {
 	// boid の個体を管理する配列
 	var boids = new Array(numOfBoids);
 
-/*
+// /*
 	var Boid = (function(){
+		//画像オブジェクト
+		var img = new Image();
+		//画像のパス指定
+		img.src = "images/boid.png";
 
-		function Boid(id, x, y, vx, vy) {
+
+		function Boid(id, x, y, vx, vy, alive) {
 			this.id = id;
 			this.x  = x;
 			this.y  = y;
 			this.vx = vx;
 			this.vy = vy;
+			this.alive = alive;
 		}
 
-		Boid.prototype.rule1 = function(){
-			var cx = 0;
-			var cy = 0;
-			
-			for( var j = 0; j < numOfBoids; j++ ){
-				if( i != j ){
-					cx += boids[ j ].x;
-					cy += boids[ j ].y;
-				}
+		Boid.prototype.update = function(){
+			if( this.alive ){
+				this.rule1();
+				this.rule2();
+				this.rule3();
+				this.rule4();
+				this.rule5();
+
+				// 速さを制限する
+		    	var velocity = Math.sqrt( this.vx * this.vx + this.vy * this.vy );
+		    	if( velocity > MAXSPEED ){
+		    		this.vx *= MAXSPEED / velocity;
+		    		this.vy *= MAXSPEED / velocity; 
+		    	}
+
+			    // 位置の更新
+			    this.x += this.vx;
+			    this.y += this.vy;
 			}
-			cx /= numOfBoids - 1;
-			cy /= numOfBoids - 1;
-
-			this.vx += ( cx - this.x ) / 1000;
-			this.vy += ( cy - this.y ) / 1000;
 		}
 
-		return Boid;
-	})();
-*/
-
-	// 初期処理
-	for(var i=0; i<numOfBoids; i++){
-		boids[i] = {
-			x: width/2,
-			y: height/2,
-			vx: 0,
-			vy: 0,
-			alive: true
-		};
-	}
-
-	var Boids = {
-		rule1: function(i){ // すべてのBoidは群の中心に向かおうとする
-
+		Boid.prototype.rule1 = function(){ // すべてのBoidは群の中心に向かおうとする
 			var cx = 0;
 			var cy = 0;
 			
 			var aliveCount = 0;  // 生きている boid の数を数える
 
 			for( var j = 0; j < numOfBoids; j++ ){
-				if( i != j ){
+				if( this.id != j ){
 
 					if( boids[j].alive ){
 						cx += boids[ j ].x;
@@ -133,22 +189,22 @@ $(function() {
 				cx /= aliveCount - 1;
 				cy /= aliveCount - 1;
 
-				boids[ i ].vx += ( cx - boids[ i ].x ) / 1000;
-				boids[ i ].vy += ( cy - boids[ i ].y ) / 1000;
+				this.vx += ( cx - this.x ) / 1000;
+				this.vy += ( cy - this.y ) / 1000;
 
 			}
+		}
 
-		},
-		rule2: function(i){ // 他の個体と距離をとろうとする
+		Boid.prototype.rule2 = function(){ // 他の個体と距離をとろうとする
 			var vx = 0;
 			var vy = 0;
 
-			for( var j = i + 1; j < numOfBoids; j++ ){
+			for( var j = this.id + 1; j < numOfBoids; j++ ){
 
 				if( boids[j].alive ){
 
-					var dx = boids[ j ].x - boids[ i ].x;
-					var dy = boids[ j ].y - boids[ i ].y;
+					var dx = boids[ j ].x - this.x;
+					var dy = boids[ j ].y - this.y;
 
 					var dist = Math.sqrt( dx * dx + dy * dy );
 					if( dist < 15 ){
@@ -161,18 +217,17 @@ $(function() {
 				}
 			}
 
-			boids[ i ].vx += vx;
-			boids[ i ].vy += vy;
-
-		},
-		rule3: function(i){ // 他の個体と向きと速度を合わせようとする
+			this.vx += vx;
+			this.vy += vy;
+		}
+		Boid.prototype.rule3 = function(){ // 他の個体と向きと速度を合わせようとする
 			var pvx = 0;
 			var pvy = 0;
 
 			var aliveCount = 0;  // 生きている boids の数
 
 			for( var j = 0; j < numOfBoids; j++ ){
-				if( i != j ){
+				if( this.id != j ){
 
 					if( boids[j].alive ){
 						pvx += boids[ j ].vx;
@@ -189,46 +244,88 @@ $(function() {
 				pvx /= aliveCount - 1;
 				pvy /= aliveCount - 1;
 
-				boids[ i ].vx += ( pvx - boids[ i ].vx ) / 10;
-	  			boids[ i ].vy += ( pvy - boids[ i ].vy ) / 10;
+				this.vx += ( pvx - this.vx ) / 10;
+	  			this.vy += ( pvy - this.vy ) / 10;
 			}
 			
-		},
-		rule4: function(i){ // 移動領域を限定する
-
+		}
+		Boid.prototype.rule4 = function(){ // 移動領域を限定する
 			// 壁の近くでは方向反転
-			if( boids[i].x < 10 && boids[ i ].vx < 0 ){
-				boids[i].vx += 10 / ( Math.abs( boids[i].x  ) + 1 );
+			if( this.x < 10 && this.vx < 0 ){
+				this.vx += 10 / ( Math.abs( this.x  ) + 1 );
 			} 
-			else if( boids[i].x > width - 10 && boids[i].vx > 0 ){
-				boids[i].vx -= 10 / ( Math.abs( width - boids[i].x ) + 1 );
+			else if( this.x > width - 10 && this.vx > 0 ){
+				this.vx -= 10 / ( Math.abs( width - this.x ) + 1 );
 			}
 
-			if( boids[i].y < 10 && boids[i].vy < 0 ){
-				boids[i].vy += 10 / ( Math.abs( boids[i].y  ) + 1 );
+			if( this.y < 10 && this.vy < 0 ){
+				this.vy += 10 / ( Math.abs( this.y  ) + 1 );
 			}
-			else if( boids[i].y > height - 10 && boids[i].vy > 0 ){
-				boids[i].vy -= 10 / ( Math.abs( height - boids[i].y ) + 1 );
+			else if( this.y > height - 10 && this.vy > 0 ){
+				this.vy -= 10 / ( Math.abs( height - this.y ) + 1 );
 			}
   
-		},
-		rule5: function(i){
-			var dx = target.x - boids[ i ].x;
-			var dy = target.y - boids[ i ].y;
+		}
+		Boid.prototype.rule5 = function(){
+			var dx = target.x - this.x;
+			var dy = target.y - this.y;
 
 			var dist = Math.sqrt( dx * dx + dy * dy );
 
-			boids[ i ].vx += ( target.x - boids[ i ].x ) / 500;
-			if( boids[ i ].vx * ( target.x - boids[ i ].x ) < 0 ){
-				boids[ i ].vx += ( target.x - boids[ i ].x ) / 500;
+			this.vx += ( target.x - this.x ) / 500;
+			if( this.vx * ( target.x - this.x ) < 0 ){
+				this.vx += ( target.x - this.x ) / 500;
 			}
-			boids[ i ].vy += ( target.y - boids[ i ].y ) / 500;
-			if( boids[ i ].vy * ( target.y - boids[ i ].y ) < 0 ){
-				boids[ i ].vy += ( target.y - boids[ i ].y ) / 500;
+			this.vy += ( target.y - this.y ) / 500;
+			if( this.vy * ( target.y - this.y ) < 0 ){
+				this.vy += ( target.y - this.y ) / 500;
 			}
 		}
-	}
 
+		Boid.prototype.draw = function(ctx){
+
+			if( this.alive ){
+				var rad = Math.atan2(this.vy, this.vx);
+
+		    	//canvasの状態を一旦保存
+		    	ctx.save();
+
+		 		var image_width  = img.naturalWidth;
+	    		var image_height = img.naturalHeight;
+	    	
+			    //画像の縦横半分の位置へtranslate
+		    	ctx.translate(this.x-image_width/2 + image_width/2, this.y- image_height/2 +image_height/2);
+		    	//変形マトリックスに回転を適用
+		    	ctx.rotate(rad);
+
+				//translateした分戻して原点を0，0に
+		    	ctx.translate(-image_width/2, -image_height/2);
+
+			    //読み込んだimgをcanvas(c1)に貼付け
+			    ctx.drawImage(img, 0, 0);
+	    		//canvasの状態を元に戻す
+	    		ctx.restore();
+
+			}
+
+		}
+
+		return Boid;
+
+	})();
+// */
+
+	// 初期処理
+	for(var i=0; i<numOfBoids; i++){
+		boids[i] = new Boid(
+			i          // id
+			, width/2  // x
+			, height/2 // y
+			, 0        // vx
+			, 0        // vy
+			, true     // alive
+		);
+	}
 
 	// 	メインの実行
 	main();
@@ -239,7 +336,6 @@ $(function() {
 		target.y = event.pageY - canvasRect.top;
 
 	});
-
 
 	// ここからメイン
 	function main(){
@@ -261,17 +357,20 @@ $(function() {
 			appearingEnemy += 100;
 
 			if(appearingEnemy > 100000){
-				enemies.push({
-					x: width*Math.random(),
-					y: width*Math.random(),
-					radious: 60
-				});
+				enemies.push(new Enemy(
+					enemies.length,         // id
+					width  * Math.random(), // x
+					height * Math.random(), // y
+					60                      // radious 
+				));
 				appearingEnemy = 0;
 			}
 			setTimeout( main, 20 );			
 
 		}
 		else if( gameContextFlag == GAME_CONTEXT_FLAG_GAMEOVER ) {
+	    	//canvasの状態を一旦保存
+	    	ctx.save();
 
 			// Game Over
 			var text = "Game Over";
@@ -286,24 +385,18 @@ $(function() {
 			ctx.fillText("press f5 to restart.", width/2 - 100, height/2+80);
 			ctx.fill();
 
-			ctx.fillStyle = 'rgba(192, 80, 77, 0.7)';
-
 			$("#mytwitter textarea").text(" \"スコアは "+score+" 点でした #boids_sim http://tsujimotter.info/js_hack/boids/ \"");
 			$("#mytwitter").show("slow");
+
+    		//canvasの状態を元に戻す
+    		ctx.restore();
 		}
 	}
 
 
-	// とりあえずの変数
-	//var collisionTimer = 0;
-
 	// 当たり判定処理
 	function collisionDetection() {
 
-/*
-		boids[collisionTimer] = false;
-		collisionTimer++;
-*/
 		// 当たり判定
 		boids.forEach( function(boid){
 			enemies.forEach( function(enemy){
@@ -329,127 +422,33 @@ $(function() {
 		}
 	}
 
-	// とりあえずの変数
-	var deg = 0;
-
-
 	function draw(){
-		deg++;
 
 		var ctx = getCtx();
 
 		// boid の描画
 		boids.forEach( function(boid){
-			if( boid.alive ){
-				drawBoid(ctx, boid.x, boid.y, boid.vx, boid.vy, 18);
-				//fillOval(ctx, boid.x, boid.y, 6, 'rgba(192, 80, 77, 0.7)');
-
-			} 
+			boid.draw(ctx);
 		});
 
 		// 敵キャラの描画
 		enemies.forEach( function(enemy){
-			drawEnemy(ctx, enemy.x, enemy.y, enemy.radious);
-			//fillOval(ctx, enemy.x, enemy.y, enemy.radious, 'rgba(30, 192, 77, 0.7)');
+			enemy.draw(ctx);
 		});
 
 		// target の描画
-		fillOval(ctx, target.x, target.y, 20, 'rgba(0, 80, 192, 0.7)');
+		target.draw(ctx);
 	}
-
-
-	function drawBoid(ctx, x, y, vx, vy, width){
-
-		var rad = Math.atan2(vy, vx);
-
-    	//canvasの状態を一旦保存
-    	ctx.save();
-
-    	var image_width  = boid_img.naturalWidth;
-    	var image_height = boid_img.naturalHeight;
-    	
-    	//ctx.scale(ratio, ratio);
-	    //画像の縦横半分の位置へtranslate
-	    ctx.translate(x-image_width/2 + image_width/2, y- image_height/2 +image_height/2);
-	    //変形マトリックスに回転を適用
-	    ctx.rotate(rad);
-
-		//translateした分戻して原点を0，0に
-	    ctx.translate(-image_width/2, -image_height/2);
-
-	    //読み込んだimgをcanvas(c1)に貼付け
-	    ctx.drawImage(boid_img, 0, 0);
-    	//canvasの状態を元に戻す
-    	ctx.restore();
-	}
-
-
-	function drawEnemy(ctx, x, y, width){
-
-    	//canvasの状態を一旦保存
-    	ctx.save();
-
-    	var image_width  = enemy_img.naturalWidth;
-    	var image_height = enemy_img.naturalHeight;
-    	
-    	//ctx.scale(ratio, ratio);
-	    //画像の縦横半分の位置へtranslate
-	    ctx.translate(x-image_width/2 + image_width/2, y- image_height/2 +image_height/2);
-		//translateした分戻して原点を0，0に
-	    ctx.translate(-image_width/2, -image_height/2);
-
-	    //読み込んだimgをcanvas(c1)に貼付け
-	    ctx.drawImage(enemy_img, 0, 0);
-    	//canvasの状態を元に戻す
-    	ctx.restore();
-	}
-
 
 	function update(){
-		for(var i=0; i<numOfBoids; i++){
-
-			if( boids[i].alive ){
-				Boids.rule1(i);
-				Boids.rule2(i);
-				Boids.rule3(i);
-				Boids.rule4(i);
-				Boids.rule5(i);
-			
-				// 速さを制限する
-		    	var l = Math.sqrt( boids[ i ].vx * boids[ i ].vx + boids[ i ].vy * boids[ i ].vy );
-		    	if( l > MAXSPEED ){
-		    		boids[ i ].vx *= MAXSPEED / l;
-		    		boids[ i ].vy *= MAXSPEED / l; 
-		    	}
-
-			    // 位置の更新
-			    boids[ i ].x += boids[ i ].vx;
-			    boids[ i ].y += boids[ i ].vy;
-			}
-		}
+		boids.forEach( function(boid){
+			boid.update();
+		});
 
 		enemies.forEach( function(enemy){
-			var dx = Math.random()*40 - 20;
-			var dy = Math.random()*40 - 20;
-
-			if( enemy.x+dx > 0 && enemy.x+dx < width 
-				&& enemy.y+dy > 0 && enemy.y+dy < height ){
-				enemy.x += dx;
-				enemy.y += dy;
-				
-			}
-
+			enemy.update();
 		} );
 
-	}
-
-
-	// 円を描く
-	function fillOval(ctx, x, y, radious, fillStyle){
-		ctx.fillStyle = fillStyle;
-		ctx.beginPath();
-		ctx.arc(x, y, radious, 0, Math.PI*2, false);
-		ctx.fill();	
 	}
 
 });

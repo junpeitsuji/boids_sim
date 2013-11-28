@@ -23,7 +23,9 @@ var BoidsSim = (function($){
 	var FLAME_INTERVALS = 20;
 
 
-	// ターゲット
+	/**
+	 * ターゲット
+	 */
 	var Target = (function(){
 
 		function Target(x, y) {
@@ -49,7 +51,9 @@ var BoidsSim = (function($){
 	})();
 
 
-	// 敵キャラ
+	/**
+	 * 敵キャラ
+	 */
 	var Enemy = (function(){
 		//画像オブジェクト
 		var img = new Image();
@@ -101,7 +105,9 @@ var BoidsSim = (function($){
 	})();
 
 
-	// Boid
+	/**
+	 * Boid
+	 */
 	var Boid = (function(){
 		//画像オブジェクト
 		var img = new Image();
@@ -289,7 +295,9 @@ var BoidsSim = (function($){
 	})();
 
 
-	// コンストラクター
+	/**
+	 * コンストラクター
+	 */
 	function BoidsSim(selecter){
 		this.selecter = selecter;
 
@@ -360,7 +368,9 @@ var BoidsSim = (function($){
     };
 
 
-    // シミュレーションのループ処理
+    /**
+     * シミュレーションのループ処理
+     */
 	BoidsSim.prototype.start = function(onUpdate, onGameover){
 
 		var ctx = getContext(this.selecter);
@@ -410,16 +420,14 @@ var BoidsSim = (function($){
 	    	ctx.save();
 
 			// Game Over
-			var text = "Game Over";
-			
 			ctx.font = "72px 'ＭＳ Ｐゴシック'";
 			ctx.fillStyle = "#b00";
-			ctx.fillText(text, this.width/2 - 180, this.height/2);
+			ctx.fillText('Game Over', this.width/2 - 180, this.height/2);
 			ctx.fill();
 
 			ctx.font = "24px 'ＭＳ Ｐゴシック'";
 			ctx.fillStyle = "#b00";
-			ctx.fillText("press f5 to restart.", this.width/2 - 100, this.height/2+80);
+			ctx.fillText('Press "f5" to restart.', this.width/2 - 100, this.height/2+80);
 			ctx.fill();
 
 			// 	ゲームオーバーを通知
@@ -435,7 +443,9 @@ var BoidsSim = (function($){
 	}
 
 
-	// 当たり判定処理
+	/**
+	 * 当たり判定処理
+	 */
 	BoidsSim.prototype.collisionDetection = function() {
 		var pthis = this;
 
@@ -466,7 +476,9 @@ var BoidsSim = (function($){
 		return this;
 	}
 
-	// 描画処理
+	/**
+	 * 描画処理
+	 */
 	BoidsSim.prototype.draw = function(){
 
 		var ctx = getContext(this.selecter);
@@ -487,7 +499,9 @@ var BoidsSim = (function($){
 		return this;
 	}
 
-	// 更新処理
+	/**
+	 * 更新処理
+	 */
 	BoidsSim.prototype.update = function(){
 		
 		var pthis = this;

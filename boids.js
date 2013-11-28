@@ -302,7 +302,7 @@ var BoidsSim = (function($){
 		this.selecter = selecter;
 
 		var canvas = document.getElementById(selecter);
-		var canvasRect = canvas.getBoundingClientRect()
+		//var canvasRect = canvas.getBoundingClientRect()
 
 		this.width  = canvas.width;
 		this.height = canvas.height;
@@ -356,8 +356,10 @@ var BoidsSim = (function($){
 
 		// クリック処理
 		$(this.selecter).click( function(event){
-			pthis.target.x = event.pageX - canvasRect.left;
-			pthis.target.y = event.pageY - canvasRect.top;
+			var rect = $(event.target).offset();
+
+			pthis.target.x = event.pageX - rect.left;
+			pthis.target.y = event.pageY - rect.top;
 		});
 	}
 

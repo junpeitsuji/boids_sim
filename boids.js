@@ -1,8 +1,18 @@
-$(function() {
+/**
+ * Boids シミュレーションタイプのゲーム
+ *
+ */
+var BoidsSim = (function($){
 
-	// コンテキストを取得する関数
+	var canvasSelecter;
+
+	function BoidsSim(selecter){
+		canvasSelecter = selecter;
+	}
+
+		// コンテキストを取得する関数
 	function getCtx() {
-		var canvas = document.getElementById('canvas');
+		var canvas = document.getElementById(canvasSelecter);
 		return canvas.getContext('2d');
     };
 
@@ -71,12 +81,7 @@ $(function() {
 
 	// ターゲット
 	var Target = (function(){
-		/*
-		//画像オブジェクト
-		var img = new Image();
-		//画像のパス指定
-		img.src = "images/target.png";
-		*/
+
 		function Target(x, y) {
 			this.x = x;
 			this.y = y;
@@ -126,7 +131,7 @@ $(function() {
 	// boid の個体を管理する配列
 	var boids = new Array(numOfBoids);
 
-// /*
+
 	var Boid = (function(){
 		//画像オブジェクト
 		var img = new Image();
@@ -313,7 +318,6 @@ $(function() {
 		return Boid;
 
 	})();
-// */
 
 	// 初期処理
 	for(var i=0; i<numOfBoids; i++){
@@ -327,128 +331,140 @@ $(function() {
 		);
 	}
 
-	// 	メインの実行
-	main();
 
-	// クリック処理
-	$('canvas').click( function(event){
-		target.x = event.pageX - canvasRect.left;
-		target.y = event.pageY - canvasRect.top;
+	BoidsSim.prototype.start = function(onUpdate, onGameover){
 
-	});
+		// クリック処理
+		$(canvasSelecter).click( function(event){
+			target.x = event.pageX - canvasRect.left;
+			target.y = event.pageY - canvasRect.top;
+		});
 
-	// ここからメイン
-	function main(){
-		var ctx = getCtx();
-		ctx.clearRect(0, 0, width, height);
-	
-		draw();
-		update();			
+		// ここからメイン
+		function main(){
+			var ctx = getCtx();
+			ctx.clearRect(0, 0, width, height);
+		
+			draw();
+			update();			
 
-		// 当たり判定
-		collisionDetection();
+			// 当たり判定
+			collisionDetection();
 
-		$('#score').text(score);
-		$('#boids').text(numOfBoidsRemaining);
-
-		if( gameContextFlag == GAME_CONTEXT_FLAG_GAMERUNNING ){
-
-			score += 100;
-			appearingEnemy += 100;
-
-			if(appearingEnemy > 100000){
-				enemies.push(new Enemy(
-					enemies.length,         // id
-					width  * Math.random(), // x
-					height * Math.random(), // y
-					60                      // radious 
-				));
-				appearingEnemy = 0;
+			// 更新後の状態を通知
+			if(onUpdate){
+				onUpdate(score, numOfBoidsRemaining);
 			}
-			setTimeout( main, 20 );			
-
-		}
-		else if( gameContextFlag == GAME_CONTEXT_FLAG_GAMEOVER ) {
-	    	//canvasの状態を一旦保存
-	    	ctx.save();
-
-			// Game Over
-			var text = "Game Over";
 			
-			ctx.font = "72px 'ＭＳ Ｐゴシック'";
-			ctx.fillStyle = "#b00";
-			ctx.fillText(text, width/2 - 180, height/2);
-			ctx.fill();
+			if( gameContextFlag == GAME_CONTEXT_FLAG_GAMERUNNING ){
 
-			ctx.font = "24px 'ＭＳ Ｐゴシック'";
-			ctx.fillStyle = "#b00";
-			ctx.fillText("press f5 to restart.", width/2 - 100, height/2+80);
-			ctx.fill();
+				score += 100;
+				appearingEnemy += 100;
 
-			$("#mytwitter textarea").text(" \"スコアは "+score+" 点でした #boids_sim http://tsujimotter.info/js_hack/boids/ \"");
-			$("#mytwitter").show("slow");
+				if(appearingEnemy > 100000){
+					enemies.push(new Enemy(
+						enemies.length,         // id
+						width  * Math.random(), // x
+						height * Math.random(), // y
+						60                      // radious 
+					));
+					appearingEnemy = 0;
+				}
+				setTimeout( function(){
+					main();
+				}, 20 );			
 
-    		//canvasの状態を元に戻す
-    		ctx.restore();
+			}
+			else if( gameContextFlag == GAME_CONTEXT_FLAG_GAMEOVER ) {
+		    	//canvasの状態を一旦保存
+		    	ctx.save();
+
+				// Game Over
+				var text = "Game Over";
+				
+				ctx.font = "72px 'ＭＳ Ｐゴシック'";
+				ctx.fillStyle = "#b00";
+				ctx.fillText(text, width/2 - 180, height/2);
+				ctx.fill();
+
+				ctx.font = "24px 'ＭＳ Ｐゴシック'";
+				ctx.fillStyle = "#b00";
+				ctx.fillText("press f5 to restart.", width/2 - 100, height/2+80);
+				ctx.fill();
+
+				// 	ゲームオーバーを通知
+				if(onGameover){
+					onGameover(score);
+				}
+
+	    		//canvasの状態を元に戻す
+	    		ctx.restore();
+			}
 		}
-	}
 
 
-	// 当たり判定処理
-	function collisionDetection() {
+		// 当たり判定処理
+		function collisionDetection() {
 
-		// 当たり判定
-		boids.forEach( function(boid){
-			enemies.forEach( function(enemy){
-				var dist = (boid.x-enemy.x)*(boid.x-enemy.x) + (boid.y-enemy.y)*(boid.y-enemy.y);
-				if( dist < enemy.radious*enemy.radious ){
-					boid.alive = false;
+			// 当たり判定
+			boids.forEach( function(boid){
+				enemies.forEach( function(enemy){
+					var dist = (boid.x-enemy.x)*(boid.x-enemy.x) + (boid.y-enemy.y)*(boid.y-enemy.y);
+					if( dist < enemy.radious*enemy.radious ){
+						boid.alive = false;
+					}
+				});
+			});
+
+			// 全個体が死んだらゲームオーバー
+			var aliveCount = 0;
+			boids.forEach( function(boid){
+				if( boid.alive ){
+					aliveCount++;
 				}
 			});
-		});
 
-		// 全個体が死んだらゲームオーバー
-		var aliveCount = 0;
-		boids.forEach( function(boid){
-			if( boid.alive ){
-				aliveCount++;
+			numOfBoidsRemaining = aliveCount;
+
+			if( aliveCount <= 0 ) {
+				gameContextFlag = GAME_CONTEXT_FLAG_GAMEOVER;
 			}
-		});
-
-		numOfBoidsRemaining = aliveCount;
-
-		if( aliveCount <= 0 ) {
-			gameContextFlag = GAME_CONTEXT_FLAG_GAMEOVER;
 		}
+
+		function draw(){
+
+			var ctx = getCtx();
+
+			// boid の描画
+			boids.forEach( function(boid){
+				boid.draw(ctx);
+			});
+
+			// 敵キャラの描画
+			enemies.forEach( function(enemy){
+				enemy.draw(ctx);
+			});
+
+			// target の描画
+			target.draw(ctx);
+		}
+
+		function update(){
+			boids.forEach( function(boid){
+				boid.update();
+			});
+
+			enemies.forEach( function(enemy){
+				enemy.update();
+			} );
+
+		}
+
+		// 	メインの実行
+		main();
+
 	}
 
-	function draw(){
+	return BoidsSim;
 
-		var ctx = getCtx();
-
-		// boid の描画
-		boids.forEach( function(boid){
-			boid.draw(ctx);
-		});
-
-		// 敵キャラの描画
-		enemies.forEach( function(enemy){
-			enemy.draw(ctx);
-		});
-
-		// target の描画
-		target.draw(ctx);
-	}
-
-	function update(){
-		boids.forEach( function(boid){
-			boid.update();
-		});
-
-		enemies.forEach( function(enemy){
-			enemy.update();
-		} );
-
-	}
-
-});
+})(jQuery);

@@ -67,3 +67,24 @@ canvas {
 </div>
 <script src="http://code.jquery.com/jquery-1.8.3.min.js"></script>
 <script src="boids.js"></script>
+<script type="text/javascript">
+$(function() {
+	// キャンバスに boids シミュレーションを設定
+	var boids_sim = new BoidsSim('canvas');
+
+	// シミュレーションステップを開始
+	boids_sim.start(
+		function(score, numOfBoids) { 
+			// onUpdate
+			$('#score').text(score);
+			$('#boids').text(numOfBoids);
+		}
+		, function(score) {          
+			// onGameover
+			$("#mytwitter textarea").text(" \"スコアは "+score+" 点でした #boids_sim http://tsujimotter.info/js_hack/boids/ \"");
+			$("#mytwitter").show("slow");
+
+		}
+	);
+});
+</script>
